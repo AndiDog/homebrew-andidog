@@ -32,7 +32,7 @@ class Ice37 < Formula
   depends_on "lmdb"
   depends_on :java => ["1.8+", :optional]
   depends_on :macos => :mavericks
-  depends_on :python if MacOS.version <= :snow_leopard
+  depends_on "python@2"
 
   def install
     # Ensure Gradle uses a writable directory even in sandbox mode

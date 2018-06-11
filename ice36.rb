@@ -1,17 +1,18 @@
 class Ice36 < Formula
   desc "Comprehensive RPC framework"
   homepage "https://zeroc.com"
-  url "https://github.com/zeroc-ice/ice/archive/v3.6.4.tar.gz"
-  sha256 "4f5cc5e09586eab7de7745bbdc5fbf383c59f8fdc561264d4010bba19afdde2a"
+  url "https://github.com/zeroc-ice/ice.git",
+    :revision => "v3.6.4"
+  head "https://github.com/zeroc-ice/ice.git", :branch => "3.6"
+  version "3.6.4"
 
   option "with-java", "Build Ice for Java and the IceGrid Admin app"
-  option "with-php", "Build Ice for PHP"
   option "without-python", "Build without Ice for Python"
 
   depends_on "mcpp"
   depends_on :java => ["1.7+", :optional]
   depends_on :macos => :mavericks
-  depends_on "python"
+  depends_on "python@2"
 
   resource "berkeley-db" do
     url "https://zeroc.com/download/homebrew/db-5.3.28.NC.brew.tar.gz"
@@ -28,6 +29,13 @@ class Ice36 < Formula
         --mandir=#{libexec}/man
         --enable-cxx
       ]
+
+      inreplace "src/dbinc/atomic.h", /#define\tatomic_init/, "#define atomic_initBDB"
+      inreplace "src/mp/mp_fget.c", "atomic_init", "atomic_initBDB"
+      inreplace "src/mp/mp_mvcc.c", "atomic_init", "atomic_initBDB"
+      inreplace "src/mp/mp_region.c", "atomic_init", "atomic_initBDB"
+      inreplace "src/mutex/mut_method.c", "atomic_init", "atomic_initBDB"
+      inreplace "src/mutex/mut_tas.c", "atomic_init", "atomic_initBDB"
 
       if build.with? "java"
         args << "--enable-java"
@@ -62,6 +70,7 @@ class Ice36 < Formula
       OPTIMIZE=yes
       DB_HOME=#{libexec}
       MCPP_HOME=#{Formula["mcpp"].opt_prefix}
+      CPP11=yes
     ]
 
     cd "cpp" do
@@ -69,7 +78,7 @@ class Ice36 < Formula
     end
 
     if build.with? "python"
-      args << "PYTHON=#{HOMEBREW_PREFIX/"bin/python2"}"
+      args << "PYTHON=#{Formula["python@2"].opt_bin/"python2.7"}"
       cd "python" do
         inreplace "config/install_dir", "print(e.install_dir)", "print('#{lib}/python2.7/site-packages')"
         inreplace "config/Make.rules", /^\s*install_libdir\s*=.*/, "install_libdir = #{lib/"python2.7/site-packages"}"
@@ -84,16 +93,6 @@ class Ice36 < Formula
 
     if build.with? "java"
       cd "java" do
-        system "make", "install", *args
-      end
-    end
-
-
-
-    if build.with? "php"
-      cd "php" do
-        args << "install_phpdir=#{share}/php"
-        args << "install_libdir=#{lib}/php/extensions"
         system "make", "install", *args
       end
     end
@@ -132,10 +131,5 @@ class Ice36 < Formula
     system "xcrun", "clang++", "-c", "-I#{include}", "-I.", "Test.cpp"
     system "xcrun", "clang++", "-L#{lib}", "-o", "test", "Test.o", "Hello.o", "-lIce", "-lIceUtil"
     system "./test", "--Ice.InitPlugins=0"
-    if build.with? "php"
-      system "/usr/bin/php", "-d", "extension_dir=#{lib}/php/extensions",
-                            "-d", "extension=IcePHP.dy",
-                            "-r", "extension_loaded('ice') ? exit(0) : exit(1);"
-    end
   end
 end
