@@ -1,22 +1,8 @@
 class Ice37 < Formula
   desc "Comprehensive RPC framework"
   homepage "https://zeroc.com"
-  url "https://github.com/zeroc-ice/ice/archive/v3.7.0.tar.gz"
-  sha256 "809fff14a88a7de1364c846cec771d0d12c72572914e6cc4fb0b2c1861c4a1ee"
-  revision 1
-
-  bottle do
-    cellar :any
-    sha256 "12c868b7c154912199a6d30b43cbd01dfdf8b40c84e2a617a12c7c1b566511a4" => :high_sierra
-    sha256 "61278509d486649a63866a88cc398b623a4bfe42bb12f91361748de62cea33f8" => :sierra
-    sha256 "57bfd40f9d453215b197b5043de07554de9848c69ffdaa8909781bdf792b4b1f" => :el_capitan
-  end
-
-  # Xcode 9 support
-  patch do
-    url "https://github.com/zeroc-ice/ice/commit/3a55ebb51b8914b60d308a0535d9abf97567138d.patch?full_index=1"
-    sha256 "d95e76acebdae69edf3622f5141ea32bbbd5844be7c29d88e6e985d14a5d5dd4"
-  end
+  url "https://github.com/zeroc-ice/ice/archive/v3.7.1.tar.gz"
+  sha256 "b1526ab9ba80a3d5f314dacf22674dff005efb9866774903d0efca5a0fab326d"
 
   #
   # NOTE: we don't build slice2py, slice2js, slice2rb by default to prevent clashes with
@@ -35,6 +21,7 @@ class Ice37 < Formula
   depends_on "python@2"
 
   def install
+    ENV.O2 # Os causes performance issues
     # Ensure Gradle uses a writable directory even in sandbox mode
     ENV["GRADLE_USER_HOME"] = "#{buildpath}/.gradle"
 
@@ -53,7 +40,6 @@ class Ice37 < Formula
       args << "PYTHON_LIB_NAME=-Wl,-undefined,dynamic_lookup"
       cd "python" do
         inreplace "config/install_dir", "print(e.install_dir)", "print('#{lib}/python2.7/site-packages')"
-        inreplace "config/Make.rules", /^python_ldflags\s*:=\s*-L\$\(PYTHON_LIB_DIR\) -l\$\(PYTHON_LIB_NAME\)$/, "python_ldflags := -Wl,-undefined,dynamic_lookup"
       end
 
       # If building Python support, slice2py is required to generate Python code from slices. However if additional
