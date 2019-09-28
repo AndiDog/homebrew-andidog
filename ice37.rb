@@ -1,8 +1,8 @@
 class Ice37 < Formula
   desc "Comprehensive RPC framework"
   homepage "https://zeroc.com"
-  url "https://github.com/zeroc-ice/ice/archive/v3.7.1.tar.gz"
-  sha256 "b1526ab9ba80a3d5f314dacf22674dff005efb9866774903d0efca5a0fab326d"
+  url "https://github.com/zeroc-ice/ice/archive/v3.7.2.tar.gz"
+  sha256 "e329a24abf94a4772a58a0fe61af4e707743a272c854552eef3d7833099f40f9"
 
   option "with-additional-compilers", "Build additional Slice compilers (slice2py, slice2js, slice2rb)"
   option "with-java", "Build Ice for Java and the IceGrid GUI app"
@@ -14,15 +14,13 @@ class Ice37 < Formula
   depends_on :java => ["1.8+", :optional]
   depends_on "python@2"
 
-  patch do
-    url "https://github.com/zeroc-ice/ice/compare/v3.7.1..v3.7.1-xcode10.patch?full_index=1"
-    sha256 "28eff5dd6cb6065716a7664f3973213a2e5186ddbdccb1c1c1d832be25490f1b"
-  end
-
   def install
     ENV.O2 # Os causes performance issues
     # Ensure Gradle uses a writable directory even in sandbox mode
     ENV["GRADLE_USER_HOME"] = "#{buildpath}/.gradle"
+
+    # `include/generated/Ice/Endpoint.h:901:47: error: parameter 'underlying' shadows member inherited from type 'EndpointInfo' [-Werror,-Wshadow-field]`
+    ENV["CPPFLAGS"] = " -Wno-shadow-field"
 
     args = [
       "prefix=#{prefix}",
@@ -58,6 +56,29 @@ class Ice37 < Formula
     end
 
     system "make", "install", *args
+
+    (libexec/"bin").mkpath
+    if build.with?("additional-compilers")
+      if build.with?("python")
+        mv bin/"slice2py", libexec/"bin"
+      end
+
+      %w[slice2rb slice2js].each do |r|
+        mv bin/r, libexec/"bin"
+      end
+    end
+  end
+
+  def caveats
+    if build.with?("additional-compilers")
+      return <<~EOS
+        slice compilers were installed in:
+
+          #{opt_libexec}/bin
+
+        You may wish to add this directory to your PATH.
+      EOS
+    end
   end
 
   test do
