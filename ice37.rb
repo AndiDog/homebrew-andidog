@@ -4,21 +4,20 @@ class Ice37 < Formula
   url "https://github.com/zeroc-ice/ice/archive/v3.7.1.tar.gz"
   sha256 "b1526ab9ba80a3d5f314dacf22674dff005efb9866774903d0efca5a0fab326d"
 
-  #
-  # NOTE: we don't build slice2py, slice2js, slice2rb by default to prevent clashes with
-  # the translators installed by the PyPI/GEM/npm packages.
-  #
-
   option "with-additional-compilers", "Build additional Slice compilers (slice2py, slice2js, slice2rb)"
   option "with-java", "Build Ice for Java and the IceGrid GUI app"
   option "without-python", "Build without Ice for Python"
-  option "without-xcode-sdk", "Build without the Xcode SDK for iOS development (includes static libs)"
 
-  depends_on "mcpp"
   depends_on "lmdb"
-  depends_on :java => ["1.8+", :optional]
   depends_on :macos => :mavericks
+  depends_on "mcpp"
+  depends_on :java => ["1.8+", :optional]
   depends_on "python@2"
+
+  patch do
+    url "https://github.com/zeroc-ice/ice/compare/v3.7.1..v3.7.1-xcode10.patch?full_index=1"
+    sha256 "28eff5dd6cb6065716a7664f3973213a2e5186ddbdccb1c1c1d832be25490f1b"
+  end
 
   def install
     ENV.O2 # Os causes performance issues
@@ -30,9 +29,11 @@ class Ice37 < Formula
       "V=1",
       "MCPP_HOME=#{Formula["mcpp"].opt_prefix}",
       "LMDB_HOME=#{Formula["lmdb"].opt_prefix}",
-      "CONFIGS=shared cpp11-shared #{build.with?("xcode-sdk") ? "xcodesdk cpp11-xcodesdk" : ""}",
+      "CONFIGS=shared cpp11-shared xcodesdk cpp11-xcodesdk",
       "PLATFORMS=all",
-      "SKIP=slice2confluence #{build.without?("python") ? "slice2py" : ""} #{build.without?("additional-compilers") ? "slice2rb slice2js" : ""}",
+      # We don't build slice2py, slice2js, slice2rb by default to prevent clashes with
+      # the translators installed by the PyPI/GEM/npm packages.
+      "SKIP=slice2confluence #{build.without?("python") && build.without?("additional-compilers") ? "slice2py" : ""} #{build.without?("additional-compilers") ? "slice2rb slice2js" : ""}",
       "LANGUAGES=cpp objective-c #{build.with?("java") ? "java java-compat" : ""} #{build.with?("python") ? "python" : ""}",
     ]
 
