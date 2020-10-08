@@ -36,9 +36,9 @@ class Ice37 < Formula
     ]
 
     if build.with? "python"
-      args << "PYTHON_LIB_NAME=-Wl,-undefined,dynamic_lookup"
       cd "python" do
         inreplace "config/install_dir", "print(e.install_dir)", "print('#{lib}/python2.7/site-packages')"
+        inreplace "config/Make.rules", /(python_ldflags\s*:=\s*\$\(shell \$\(python-config\) --ldflags\))/, "\\1 -Wl,-undefined,dynamic_lookup"
       end
 
       # If building Python support, slice2py is required to generate Python code from slices. However if additional
