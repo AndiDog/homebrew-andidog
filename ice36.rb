@@ -11,7 +11,6 @@ class Ice36 < Formula
 
   depends_on "mcpp"
   depends_on :java => ["1.7+", :optional]
-  depends_on :macos => :mavericks
   depends_on "python@2"
 
   resource "berkeley-db" do
